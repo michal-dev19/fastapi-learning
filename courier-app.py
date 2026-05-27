@@ -42,6 +42,7 @@ def seed_db():
 seed_db()
 
 
+# this operation returns all the individual drivers' information within 'users' table
 @app.get("/drivers")
 def get_drivers():
     cursor.execute("SELECT * FROM users")
@@ -53,6 +54,14 @@ def get_drivers():
             for item in cursor.fetchall()
         ]
     }
+
+
+# this operation returns specified driver information within 'users' table
+@app.get("/drivers/{id}")
+def get_user(id: int):
+    cursor.execute(f"SELECT * FROM users WHERE id = {id}")
+    user_info = cursor.fetchone()
+    return {"driver": {"id": user_info[0], "name": user_info[1], "email": user_info[2]}}
 
 
 if __name__ == "__main__":
