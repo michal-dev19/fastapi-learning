@@ -1,5 +1,5 @@
 import sqlite3
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import uvicorn
 
 conn = sqlite3.connect("courier.db", check_same_thread=False)
@@ -59,9 +59,20 @@ def get_drivers():
 # this operation returns specified driver information within 'users' table
 @app.get("/drivers/{id}")
 def get_user(id: int):
-    cursor.execute(f"SELECT * FROM users WHERE id = {id}")
+    cursor.execute("SELECT * FROM users WHERE id = ?", (id,))
     user_info = cursor.fetchone()
+    if user_info is None:
+        raise HTTPException(status_code=404, detail="Item not found")
     return {"driver": {"id": user_info[0], "name": user_info[1], "email": user_info[2]}}
+
+
+# delete a user from the 'users' table
+@app.delete("/drivers/{id}")
+def delete_user(id: int):
+    cursor.execute("DELETE FROM users WHERE id = ?", (id,))
+    if cursor.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"deletion": "Success"}
 
 
 if __name__ == "__main__":
