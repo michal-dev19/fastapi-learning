@@ -27,34 +27,47 @@ def init():
 init()
 
 
+# verify tables are empty before seeding
+def verify_seed(table):
+    cursor.execute(f"SELECT * FROM {table}")
+    if cursor.fetchone() is None:
+        return True
+
+
 def seed():
     # insert data into created tables
-    cursor.execute("""
-        INSERT INTO driver (name, age, driving_licence) 
-        VALUES 
-        ('Jim', 34, 'Cat B'), 
-        ('Harry', 21, 'Cat B'), 
-        ('Brad', 27, 'Cat C')""")
+    if verify_seed("driver"):
+        cursor.execute("""
+            INSERT INTO driver (name, age, driving_licence) 
+            VALUES 
+            ('Jim', 34, 'Cat B'), 
+            ('Harry', 21, 'Cat B'), 
+            ('Brad', 27, 'Cat C')""")
 
-    cursor.execute("""
-        INSERT INTO company (name, year_founded, industry, net_worth) 
-        VALUES 
-        ('Hauling LTD', 2007, 'Transport', 4000000), 
-        ('Inpost', 2006, 'Delivery', 20000000), 
-        ('Curry''s', 1884, 'Retail', 40000000)""")
+    if verify_seed("company"):
+        cursor.execute("""
+            INSERT INTO company (name, year_founded, industry, net_worth) 
+            VALUES 
+            ('Hauling LTD', 2007, 'Transport', 4000000), 
+            ('Inpost', 2006, 'Delivery', 20000000), 
+            ('Curry''s', 1884, 'Retail', 40000000)""")
 
-    cursor.execute("""
-        INSERT INTO job (name, company_id, contract, licence_req, description)
-        VALUES 
-        ('Retail Assistant', 3, 'Permanent', 'None', 'Help customers around the store'), 
-        ('Truck Driver', 1, 'Temporary', 'Category C', 'Transporting fragile cargo across Europe'),
-        ('Courier', 2, 'Temporary', 'Category B', 'Deliver parcels to clients across a set region')""")
+    if verify_seed("job"):
+        cursor.execute("""
+            INSERT INTO job (name, company_id, contract, licence_req, description)
+            VALUES 
+            ('Retail Assistant', 3, 'Permanent', 'None', 'Help customers around the store'), 
+            ('Truck Driver', 1, 'Temporary', 'Category C', 'Transporting fragile cargo across Europe'),
+            ('Courier', 2, 'Temporary', 'Category B', 'Deliver parcels to clients across a set region')""")
 
-    cursor.execute("""
-        INSERT INTO application (date_sent, job_id, driver_id, open)
-        VALUES 
-        ('25/05/2026', 1, 2, 1),
-        ('11/04/2026', 2, 3, 0)""")
+    if verify_seed("application"):
+        cursor.execute("""
+            INSERT INTO application (date_sent, job_id, driver_id, open)
+            VALUES 
+            ('25/05/2026', 1, 2, 1),
+            ('11/04/2026', 2, 3, 0)""")
+
+    # hard save changes to DB
     conn.commit()
 
 
