@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Header
 import bcrypt
-from jose import jwt
+from jose import jwt, JWTError
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 import sqlite3
@@ -24,7 +24,7 @@ def hash_password(password: str) -> str:
 
 def create_token(id: str) -> str:
     return jwt.encode(
-        {"key": id, "exp": datetime.utcnow() + timedelta(seconds=60000)},
+        {"sub": id, "exp": datetime.utcnow() + timedelta(seconds=60000)},
         SECRET_KEY,
         algorithm=ALGORITHM,
     )
@@ -88,5 +88,24 @@ def login_user(user_info: UserCreate):
         raise HTTPException(status_code=404, detail="Item not found")
 
     if bcrypt.checkpw(user_info.password.encode("utf-8"), info_list[2].encode("utf-8")):
-        return create_token(info_list[0])
+        return create_token(str(info_list[0]))
     return {"Success": "false"}
+
+
+# authorises the user with their signed token
+def get_current_user(authorization: str = Header(None)):
+    print(authorization)
+    if authorization is None:
+        raise HTTPException(status_code=401, detail="Unauthorised")
+    encoded_token = authorization.split(" ")[1]
+    try:
+        return jwt.decode(token=encoded_token, key=SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError as e:
+        print(f"JWT Error: {e}")
+        raise HTTPException(status_code=401, detail="Unauthorised")
+
+
+# completes authorisation for desired path for the user
+@app.get("/me")
+def read_me(current_user=Depends(get_current_user)):
+    return current_user
