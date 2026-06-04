@@ -27,8 +27,11 @@ def create_token(user_info: str) -> list:
 
 # this function authorises the current user by checking signed token
 def get_current_user(authorization: str = Header()):
+    if authorization is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    encoded_token = authorization.split(" ")[1]
     try:
-        return jwt.decode(authorization, SECRET_KEY, algorithms=ALGORITHM)
+        return jwt.decode(encoded_token, SECRET_KEY, algorithms=ALGORITHM)
     except JWTError:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
@@ -106,9 +109,9 @@ def login_user(login_input: CreateUser):
 
     # check whether inputted password matches stored hashed password
     if bcrypt.checkpw(
-        login_input.password.encode("utf-8"), str(user_info[2]).encode("utf-8")
+        login_input.password.encode("utf-8"), user_info[2].encode("utf-8")
     ):
-        return create_token(user_info)
+        return create_token(str(user_info))
     return {"Status": "Failure"}
 
 
