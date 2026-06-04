@@ -1,6 +1,6 @@
 import sqlite3
 from jose import jwt, JWTError
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel
 import bcrypt
 from datetime import datetime, timedelta
@@ -23,6 +23,14 @@ def create_token(user_info: str) -> list:
         SECRET_KEY,
         algorithm=ALGORITHM,
     )
+
+
+# this function authorises the current user by checking signed token
+def get_current_user(authorization: str = Header()):
+    try:
+        return jwt.decode(authorization, SECRET_KEY, algorithms=ALGORITHM)
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 
 # a class with inheritance from Header for handling JSON posts from user to server
@@ -98,7 +106,14 @@ def login_user(login_input: CreateUser):
 
     # check whether inputted password matches stored hashed password
     if bcrypt.checkpw(
-        login_input.password.encode("utf-8"), user_info[2].encode("utf-8")
+        login_input.password.encode("utf-8"), str(user_info[2]).encode("utf-8")
     ):
         return create_token(user_info)
     return {"Status": "Failure"}
+
+
+# accessing a protected route needs authorisation, we use Depends(get_current_user) to instruct FastAPI to call 'get_current_user' when a
+# request is received, this then returns the payload of the user's token into 'user', we then return this payload
+@app.post("/me")
+def me(user=Depends(get_current_user)):
+    return user
